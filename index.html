@@ -14,13 +14,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
-        body { background-color: #f8fafc; /* slate-50 for a cleaner professional look */ margin: 0; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+        body { background-color: #f8fafc; margin: 0; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
         .animate-in { animation: fadeIn 0.4s ease-out forwards; }
         .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        
-        /* Custom Scrollbar for modals */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
@@ -101,11 +99,8 @@
         const generateGroceryList = (weekMeals) => {
           const sunday = new Set(["Onions", "Potatoes", "Garlic", "Ginger", "Green Chilies", "Cooking Oil", "Spices (Jeera, Mustard)"]);
           const wednesday = new Set();
-          
           weekMeals.forEach(meal => {
             const combined = (meal.brunch + " " + meal.dinner).toLowerCase();
-            
-            // Sunday Staples
             if (combined.includes("dal") || combined.includes("moong") || combined.includes("chana") || combined.includes("rajma") || combined.includes("masoor") || combined.includes("chole") || combined.includes("kathol")) sunday.add("Mixed Lentils & Beans");
             if (combined.includes("rice") || combined.includes("bhat") || combined.includes("bhaat") || combined.includes("khichdi") || combined.includes("pulao") || combined.includes("idli") || combined.includes("dosa")) sunday.add("Rice (Basmati & Idli)");
             if (combined.includes("oats")) sunday.add("Rolled Oats");
@@ -116,7 +111,6 @@
             if (combined.includes("bajra") || combined.includes("jowar") || combined.includes("millet") || combined.includes("ragi")) sunday.add("Millet Flours (Bajra/Jowar/Ragi)");
             if (combined.includes("poha")) sunday.add("Poha (Flattened Rice)");
 
-            // Wednesday Fresh 
             if (combined.includes("paneer")) wednesday.add("Fresh Paneer");
             if (combined.includes("palak") || combined.includes("spinach")) wednesday.add("Fresh Spinach (Palak)");
             if (combined.includes("methi")) wednesday.add("Fresh Fenugreek (Methi)");
@@ -134,31 +128,187 @@
             if (combined.includes("capsicum") || combined.includes("bell pepper")) wednesday.add("Capsicum");
             if (combined.includes("yogurt") || combined.includes("kadhi") || combined.includes("curd") || combined.includes("dahi")) wednesday.add("Yogurt / Buttermilk");
           });
-
           return { sunday: Array.from(sunday), wednesday: Array.from(wednesday) };
         };
 
-        // Generic Recipe Generator for Modal
+        // --- INTELLIGENT RECIPE GENERATOR ---
         const getRecipeDetails = (name) => {
-            return {
-                title: name,
-                ingredients: [
-                    "Main ingredient for " + name,
-                    "2 tbsp Cooking Oil or Ghee",
+            const lower = name.toLowerCase();
+            let ingredients = [];
+            let steps = [];
+
+            // Category 1: Batters & Pancakes (Chilla, Dosa, Pudla, Uttapam)
+            if (lower.includes('chilla') || lower.includes('pudla') || lower.includes('dosa') || lower.includes('uttapam') || lower.includes('appe') || lower.includes('thepla')) {
+                ingredients = [
+                    "1.5 cups Main Batter/Flour (Besan, Rava, Oats, or Dal)",
+                    "1/2 cup finely chopped Onion, Tomato, and Coriander",
+                    "1-2 finely chopped Green Chilies",
+                    "1 tsp Turmeric, Salt to taste, pinch of Ajwain",
+                    "Oil or Ghee for shallow frying/cooking"
+                ];
+                steps = [
+                    "Prepare the dough or batter: Mix flour with water (or use pre-fermented batter) to a smooth consistency. Add dry spices.",
+                    "Stir in the finely chopped vegetables and let it rest for a few minutes.",
+                    "Heat a non-stick tawa (griddle) on medium heat and lightly grease it.",
+                    "Pour a ladle of batter and spread it into a circle (or roll out dough if making Thepla).",
+                    "Drizzle a few drops of oil/ghee around the edges. Cook until the bottom is golden brown.",
+                    "Flip and cook the other side. Serve hot with green chutney or yogurt."
+                ];
+            } 
+            // Category 2: Paneer & Rich Curries
+            else if (lower.includes('paneer') || lower.includes('malai') || lower.includes('makhni')) {
+                ingredients = [
+                    "200g Paneer cubes (or main ingredient)",
+                    "2 large Tomatoes and 1 Onion, pureed",
+                    "1 tbsp Ginger-Garlic paste",
+                    "1 tsp Garam Masala, 1/2 tsp Turmeric, 1 tsp Kashmiri Chili Powder",
+                    "2 tbsp Fresh Cream or Cashew paste (optional)",
+                    "Kasuri Methi (Dried fenugreek) and Fresh Coriander"
+                ];
+                steps = [
+                    "Heat oil/ghee in a pan. Add cumin seeds and let them splutter.",
+                    "Add ginger-garlic paste and sauté for a minute until fragrant.",
+                    "Pour in the onion-tomato puree and cook until the oil starts separating from the masala.",
+                    "Add all the dry spices (turmeric, chili powder, garam masala) and salt.",
+                    "Add half a cup of water to adjust the gravy consistency and bring to a simmer.",
+                    "Gently fold in the paneer cubes. Simmer for 3-4 minutes. Garnish with kasuri methi and fresh cream."
+                ];
+            }
+            // Category 3: Dals & Legumes (Chana, Rajma, Kathol, Dal)
+            else if (lower.includes('dal') || lower.includes('chana') || lower.includes('rajma') || lower.includes('masoor') || lower.includes('chole') || lower.includes('kathol')) {
+                ingredients = [
+                    "1 cup soaked/boiled Lentils or Beans (Dal, Chana, Rajma)",
+                    "1 Onion and 1 Tomato, finely chopped",
+                    "1 tsp Mustard seeds, 1 tsp Cumin seeds, pinch of Hing",
+                    "Curry leaves and 2 dried Red Chilies",
+                    "1 tbsp Ginger-Garlic paste",
+                    "Turmeric, Coriander powder, and Garam Masala"
+                ];
+                steps = [
+                    "Ensure your lentils/beans are fully pressure-cooked and soft.",
+                    "In a separate pan, heat ghee or oil to prepare the tadka (tempering).",
+                    "Add mustard seeds, cumin seeds, hing, dried chilies, and curry leaves. Let them crackle.",
+                    "Add chopped onions and ginger-garlic paste; sauté until golden brown.",
+                    "Add tomatoes and dry spices. Cook until tomatoes are mushy.",
+                    "Pour the prepared tadka over the boiled lentils. Simmer everything together for 5-10 minutes to absorb flavors."
+                ];
+            }
+            // Category 4: Dry Sabji / Shaak (Bhinda, Kobij, Bataka, Tindora)
+            else if (lower.includes('sabji') || lower.includes('shaak') || lower.includes('batata') || lower.includes('bhinda') || lower.includes('kobij') || lower.includes('tindora')) {
+                ingredients = [
+                    "500g Main Vegetable, washed and chopped (e.g., Okra, Cabbage, Potatoes)",
+                    "2 tbsp Cooking Oil",
+                    "1 tsp Mustard and Cumin seeds, pinch of Hing",
+                    "1/2 tsp Turmeric, 1 tsp Coriander-Cumin powder (Dhana-Jeeru)",
+                    "1/2 tsp Red Chili powder, Salt to taste",
+                    "Fresh Coriander for garnish"
+                ];
+                steps = [
+                    "Heat oil in a kadhai (wok) over medium heat.",
+                    "Add mustard and cumin seeds. Once they splutter, add a pinch of hing.",
+                    "Add the chopped vegetables and stir well to coat them in the oil.",
+                    "Cover with a lid and cook on low-medium heat until the vegetables are tender (stir occasionally).",
+                    "Once cooked, sprinkle turmeric, chili powder, salt, and dhana-jeeru. Mix well.",
+                    "Cook uncovered for 2 more minutes to roast the spices. Garnish with fresh coriander."
+                ];
+            }
+            // Category 5: Quick Breakfast (Poha, Upma, Oats)
+            else if (lower.includes('poha') || lower.includes('upma') || lower.includes('oats')) {
+                ingredients = [
+                    "1.5 cups Base (Poha, Rava, or Oats)",
+                    "1 small Onion and 1 small Potato, finely chopped",
+                    "1/4 cup Green Peas and Peanuts",
+                    "1 tsp Mustard seeds, Curry leaves, and Green Chilies",
+                    "1/2 tsp Turmeric, Salt, and a pinch of Sugar",
+                    "Lemon juice and Fresh Coriander"
+                ];
+                steps = [
+                    "Prep the base: Wash poha and drain, OR dry roast rava/oats and set aside.",
+                    "Heat oil in a pan. Fry the peanuts and set them aside. In the same oil, add mustard seeds, chilies, and curry leaves.",
+                    "Add onions and potatoes. Sauté until the potatoes are cooked and soft.",
+                    "Add turmeric and salt. Mix well.",
+                    "Gently fold in the prepared base (Poha, Upma, or Oats). Add a splash of water if making Upma/Oats.",
+                    "Cover and steam for 2 minutes. Turn off the heat, add lemon juice, roasted peanuts, and garnish with coriander."
+                ];
+            }
+            // Category 6: Salads & Chaats
+            else if (lower.includes('salad') || lower.includes('chaat') || lower.includes('bhel')) {
+                ingredients = [
+                    "2 cups Base (Sprouted Moong, Chickpeas, Puffed Rice, or Chopped Veggies)",
+                    "1 Onion, 1 Tomato, 1 Cucumber, finely chopped",
+                    "1 Green Chili, finely chopped",
+                    "1 tsp Chaat Masala, 1/2 tsp Roasted Cumin powder",
+                    "Black Salt (Kala Namak) and regular Salt to taste",
+                    "Juice of 1 Lemon and Fresh Mint/Coriander"
+                ];
+                steps = [
+                    "Ensure your base ingredients are ready (sprouts steamed, chickpeas boiled, or veggies washed).",
+                    "In a large mixing bowl, combine the base ingredient with the chopped onions, tomatoes, and cucumber.",
+                    "Add the finely chopped green chili for heat.",
+                    "Sprinkle the chaat masala, roasted cumin powder, black salt, and regular salt over the mix.",
+                    "Squeeze fresh lemon juice over the top and toss everything together thoroughly.",
+                    "Garnish generously with fresh coriander or mint leaves and serve immediately."
+                ];
+            }
+            // Category 7: Rice, Pulao, Khichdi
+            else if (lower.includes('bhat') || lower.includes('khichdi') || lower.includes('pulao') || lower.includes('rice')) {
+                ingredients = [
+                    "1 cup Rice (and 1/2 cup Dal if making Khichdi), washed and soaked",
+                    "1 cup mixed chopped vegetables (Carrots, Peas, Beans)",
+                    "2 tbsp Ghee",
+                    "Whole spices: 1 Bay leaf, 2 Cloves, 1 inch Cinnamon, 1 tsp Cumin seeds",
+                    "1 tsp Turmeric, Salt to taste",
+                    "Water (2 cups for Pulao, 4 cups for Khichdi)"
+                ];
+                steps = [
+                    "Wash the rice (and dal) thoroughly and soak for 20 minutes.",
+                    "Heat ghee in a pressure cooker or heavy-bottomed pot.",
+                    "Add the whole spices (bay leaf, cloves, cinnamon) and cumin seeds. Sauté until fragrant.",
+                    "Add the mixed vegetables and sauté for 2-3 minutes.",
+                    "Drain the soaked grains and add them to the pot along with turmeric and salt. Gently mix.",
+                    "Add the required amount of water. Pressure cook for 2-3 whistles (or cover and cook until water absorbs). Fluff and serve."
+                ];
+            }
+            // Category 8: Pasta & Noodles
+            else if (lower.includes('pasta') || lower.includes('noodle') || lower.includes('macaroni')) {
+                ingredients = [
+                    "2 cups Pasta or Noodles of choice",
+                    "1 cup mixed julienned Veggies (Capsicum, Cabbage, Carrots)",
+                    "1 tbsp Olive Oil or Butter",
+                    "3 cloves Garlic, minced",
+                    "1 tsp Mixed Italian Herbs or Soy/Chili sauce (based on style)",
+                    "Salt, Pepper, and grated Cheese (optional)"
+                ];
+                steps = [
+                    "Boil water in a large pot with salt. Add pasta/noodles and cook until al dente. Drain and keep a little pasta water.",
+                    "Heat oil/butter in a wide pan. Add minced garlic and sauté until aromatic.",
+                    "Add the julienned vegetables and stir-fry on high heat for 2-3 minutes so they retain their crunch.",
+                    "Add the sauces or herbs (Soy sauce for Hakka, Italian herbs for pasta) and mix well.",
+                    "Toss the boiled pasta/noodles into the pan. Mix thoroughly to coat them in the flavor.",
+                    "Adjust salt and pepper. Serve hot, optionally topped with cheese."
+                ];
+            }
+            // Fallback (Generic Gujarati Standard)
+            else {
+                ingredients = [
+                    "Main ingredients for " + name,
+                    "2 tbsp Oil or Ghee",
                     "1 tsp Mustard & Cumin Seeds",
                     "A pinch of Asafoetida (Hing) & Turmeric",
                     "Salt and Spices (Chili powder, Coriander powder) to taste",
                     "Fresh Coriander leaves for garnish"
-                ],
-                steps: [
+                ];
+                steps = [
                     "Gather and prep all your ingredients. Wash and chop vegetables if required.",
                     "Heat oil/ghee in a pan over medium heat. Add mustard and cumin seeds until they splutter.",
                     "Add asafoetida, turmeric, and the main ingredients.",
                     "Sauté well, cover, and let it cook. Add water if it is a gravy-based dish.",
                     "Adjust salt and spices to your dietary preference.",
                     "Once fully cooked, garnish with fresh coriander and serve hot."
-                ]
+                ];
             }
+
+            return { title: name, ingredients, steps };
         };
 
         function App() {
@@ -172,25 +322,18 @@
           const [selectedRecipe, setSelectedRecipe] = useState(null);
           const [showSettings, setShowSettings] = useState(false);
 
-          // Function properly declared before usage
           const generateNewSchedule = () => {
             const shuffledBrunch = shuffleArray(BRUNCH_ITEMS).slice(0, 28);
             const shuffledDinner = shuffleArray(DINNER_ITEMS).slice(0, 28);
             
             let newSchedule = [];
             for (let i = 0; i < 28; i++) {
-              newSchedule.push({
-                day: i + 1,
-                brunch: shuffledBrunch[i],
-                dinner: shuffledDinner[i]
-              });
+              newSchedule.push({ day: i + 1, brunch: shuffledBrunch[i], dinner: shuffledDinner[i] });
             }
             
             setSchedule(newSchedule);
             const today = new Date();
             setStartDate(today);
-            
-            // Instantly reset view bounds since a new schedule just generated
             setCurrentDayIndex(0);
             setActiveWeek(0);
             
@@ -198,15 +341,13 @@
               localStorage.setItem('aarogya_nidhi_schedule', JSON.stringify(newSchedule));
               localStorage.setItem('aarogya_nidhi_start', today.toISOString());
             } catch (error) {
-              console.warn("localStorage access is restricted. Schedule will reset on page reload.");
+              console.warn("localStorage access is restricted.");
             }
-            
             setShowSettings(false);
           };
 
           const calculateCurrentDay = (startDt) => {
             const now = new Date();
-            // Reset times to compare dates accurately
             const start = new Date(startDt);
             start.setHours(0,0,0,0);
             now.setHours(0,0,0,0);
@@ -215,8 +356,6 @@
             const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
             
             if (diffDays >= 28) {
-                // AUTO-RENEWAL ENGAGED: 4 weeks have passed!
-                // This triggers the regeneration of a brand new schedule and resets the dates.
                 generateNewSchedule();
             } else {
                 setCurrentDayIndex(diffDays);
@@ -244,14 +383,12 @@
                 generateNewSchedule();
               }
             } catch (error) {
-              console.warn("localStorage access is restricted in this preview. Using in-memory state instead.");
               generateNewSchedule();
             }
           }, []);
 
           if (schedule.length === 0 || !startDate) return <div className="h-screen flex items-center justify-center text-emerald-800 font-semibold animate-pulse">Generating your Aarogya Nidhi Plan...</div>;
 
-          // Date Formatting Helpers
           const getDisplayDate = (offsetDays) => {
               const d = new Date(startDate);
               d.setDate(d.getDate() + offsetDays);
@@ -283,25 +420,17 @@
                     
                     <div className="flex items-center gap-2 sm:gap-4">
                         <div className="hidden sm:flex bg-slate-100 p-1 rounded-lg">
-                            <button 
-                                onClick={() => setView('slot')}
-                                className={`px-4 py-1.5 rounded-md text-sm font-semibold flex items-center gap-2 transition-all ${view === 'slot' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'}`}
-                            >
+                            <button onClick={() => setView('slot')} className={`px-4 py-1.5 rounded-md text-sm font-semibold flex items-center gap-2 transition-all ${view === 'slot' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'}`}>
                                 <IconLayoutGrid size={16} /> Focus View
                             </button>
-                            <button 
-                                onClick={() => setView('calendar')}
-                                className={`px-4 py-1.5 rounded-md text-sm font-semibold flex items-center gap-2 transition-all ${view === 'calendar' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'}`}
-                            >
+                            <button onClick={() => setView('calendar')} className={`px-4 py-1.5 rounded-md text-sm font-semibold flex items-center gap-2 transition-all ${view === 'calendar' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'}`}>
                                 <IconCalendar size={16} /> Calendar
                             </button>
                         </div>
-                        {/* Mobile view toggles */}
                         <div className="flex sm:hidden gap-2">
                              <button onClick={() => setView('slot')} className={`p-2 rounded-md ${view === 'slot' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}><IconLayoutGrid size={18} /></button>
                              <button onClick={() => setView('calendar')} className={`p-2 rounded-md ${view === 'calendar' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}><IconCalendar size={18} /></button>
                         </div>
-
                         <button onClick={() => setShowSettings(true)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors ml-2">
                             <IconSettings size={22} />
                         </button>
@@ -457,20 +586,8 @@
                     <div className="flex justify-between items-center bg-white p-2 pl-4 rounded-2xl shadow-sm border border-slate-200 mt-8">
                       <h2 className="text-lg font-bold text-slate-800">Week {activeWeek + 1} of 4</h2>
                       <div className="flex gap-1">
-                          <button 
-                            onClick={() => setActiveWeek(Math.max(0, activeWeek - 1))}
-                            disabled={activeWeek === 0}
-                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <IconLeft size={20} />
-                          </button>
-                          <button 
-                            onClick={() => setActiveWeek(Math.min(3, activeWeek + 1))}
-                            disabled={activeWeek === 3}
-                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                          >
-                            <IconRight size={20} />
-                          </button>
+                          <button onClick={() => setActiveWeek(Math.max(0, activeWeek - 1))} disabled={activeWeek === 0} className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><IconLeft size={20} /></button>
+                          <button onClick={() => setActiveWeek(Math.min(3, activeWeek + 1))} disabled={activeWeek === 3} className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"><IconRight size={20} /></button>
                       </div>
                     </div>
 
@@ -491,18 +608,12 @@
                               </div>
                             </div>
                             <div className="p-3 space-y-3">
-                              <div 
-                                className="group relative cursor-pointer hover:bg-slate-50 p-1 -m-1 rounded-lg transition-colors"
-                                onClick={() => setSelectedRecipe(getRecipeDetails(meal.brunch))}
-                              >
+                              <div className="group relative cursor-pointer hover:bg-slate-50 p-1 -m-1 rounded-lg transition-colors" onClick={() => setSelectedRecipe(getRecipeDetails(meal.brunch))}>
                                 <div className="text-[10px] uppercase font-bold text-emerald-600 mb-0.5">Brunch</div>
                                 <div className="text-sm font-semibold text-slate-700 leading-tight">{meal.brunch}</div>
                               </div>
                               <div className="w-full h-px bg-slate-100"></div>
-                              <div 
-                                className="group relative cursor-pointer hover:bg-slate-50 p-1 -m-1 rounded-lg transition-colors"
-                                onClick={() => setSelectedRecipe(getRecipeDetails(meal.dinner))}
-                              >
+                              <div className="group relative cursor-pointer hover:bg-slate-50 p-1 -m-1 rounded-lg transition-colors" onClick={() => setSelectedRecipe(getRecipeDetails(meal.dinner))}>
                                 <div className="text-[10px] uppercase font-bold text-emerald-600 mb-0.5">Dinner</div>
                                 <div className="text-sm font-semibold text-slate-700 leading-tight">{meal.dinner}</div>
                               </div>
@@ -511,7 +622,6 @@
                         );
                       })}
                     </div>
-                    
                   </div>
                 )}
               </main>
@@ -525,17 +635,13 @@
                                   <IconX size={20} />
                               </button>
                               <h2 className="text-xl sm:text-2xl font-bold pr-10 leading-tight">{selectedRecipe.title}</h2>
-                              <a 
-                                  href={getYoutubeLink(selectedRecipe.title)} 
-                                  target="_blank" rel="noreferrer" 
-                                  className="mt-3 sm:mt-4 inline-flex items-center gap-2 bg-white text-red-600 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition-all"
-                              >
+                              <a href={getYoutubeLink(selectedRecipe.title)} target="_blank" rel="noreferrer" className="mt-3 sm:mt-4 inline-flex items-center gap-2 bg-white text-red-600 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition-all">
                                   <IconYoutube size={16} className="w-4 h-4 sm:w-5 sm:h-5" /> Watch on YouTube
                               </a>
                           </div>
                           
                           <div className="p-5 sm:p-6 overflow-y-auto">
-                              <h3 className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest mb-2 sm:mb-3">Ingredients (Standard)</h3>
+                              <h3 className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest mb-2 sm:mb-3">Ingredients</h3>
                               <ul className="space-y-1.5 sm:space-y-2 mb-6 sm:mb-8">
                                   {selectedRecipe.ingredients.map((ing, i) => (
                                       <li key={i} className="flex gap-2 text-slate-700 text-xs sm:text-sm">
@@ -568,15 +674,11 @@
                                   <IconX size={24} />
                               </button>
                           </div>
-                          
                           <div className="space-y-4">
                               <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
                                   <h3 className="font-bold text-red-800 text-sm">Danger Zone</h3>
                                   <p className="text-xs text-red-600 mt-1 mb-3">Generating a new cycle will permanently erase your current 4-week meal rotation.</p>
-                                  <button 
-                                      onClick={handleResetSchedule}
-                                      className="w-full bg-white text-red-600 border border-red-200 font-bold py-2 rounded-xl text-sm hover:bg-red-600 hover:text-white transition-colors"
-                                  >
+                                  <button onClick={handleResetSchedule} className="w-full bg-white text-red-600 border border-red-200 font-bold py-2 rounded-xl text-sm hover:bg-red-600 hover:text-white transition-colors">
                                       Generate New 4-Week Cycle
                                   </button>
                               </div>
@@ -584,7 +686,6 @@
                       </div>
                   </div>
               )}
-
             </div>
           );
         }
