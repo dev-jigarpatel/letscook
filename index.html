@@ -165,6 +165,15 @@
             "Dal Baati (Baked)": { i: ["બાટી માટે: ઘઉંનો કરકરો લોટ, ઘી, અજમો, સોડા", "દાળ માટે: મિક્સ દાળ (પંચમેલ દાળ - બાફેલી)", "ડુંગળી, ટામેટાં, લસણ", "વઘાર માટે ઘી અને મસાલા"], s: ["લોટમાં ઘી અને અજમો નાખી કઠણ કણક બાંધો અને તેના ગોળા બનાવો.", "ગોળા (બાટી) ને ઓવનમાં અથવા કૂકરમાં ધીમા તાપે શેકી લો (Baked).", "એક પેનમાં ઘી ગરમ કરી રાઈ, જીરું, લસણ, ડુંગળી અને ટામેટાંનો વઘાર કરી બાફેલી દાળ ઉમેરો.", "દાળ ઉકળે એટલે ગરમ બાટી સાથે પીરસો."] }
         };
 
+        const shuffleArray = (array) => {
+          let shuffled = [...array];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          return shuffled;
+        };
+
         const getYoutubeLink = (dish) => {
             if (!dish) return '#';
             return `https://www.youtube.com/results?search_query=${encodeURIComponent(dish + " recipe gujarati indian")}`;
@@ -543,6 +552,11 @@
                   </div>
                 )}
               </main>
+
+              {/* --- FOOTER --- */}
+              <footer className="text-center pb-8 pt-4 text-slate-400 text-xs font-medium tracking-wide">
+                  &copy; 2026 Ikshvaku Inc.
+              </footer>
 
               {/* --- CRASH-PROOF RECIPE MODAL --- */}
               {selectedRecipe && (
