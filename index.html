@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aarogya Nidhi Meal Planner</title>
+    
+    <!-- React & Babel CDNs -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body { background-color: #f8fafc; /* slate-50 for a cleaner professional look */ margin: 0; font-family: 'Inter', ui-sans-serif, system-ui, sans-serif; }
+        .animate-in { animation: fadeIn 0.4s ease-out forwards; }
+        .animate-slide-up { animation: slideUp 0.3s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom Scrollbar for modals */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- SVG Icons Components ---
+        const IconLayoutGrid = ({size=18, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>);
+        const IconCalendar = ({size=18, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg>);
+        const IconBell = ({size=24, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>);
+        const IconYoutube = ({size=20, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2.5 17a24.12 24.12 0 0 1 0-10 2 2 0 0 1 1.4-1.4 49.56 49.56 0 0 1 16.2 0A2 2 0 0 1 21.5 7a24.12 24.12 0 0 1 0 10 2 2 0 0 1-1.4 1.4 49.55 49.55 0 0 1-16.2 0A2 2 0 0 1 2.5 17"/><path d="m10 15 5-3-5-3z"/></svg>);
+        const IconCart = ({size=20, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>);
+        const IconLeft = ({size=24, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>);
+        const IconRight = ({size=24, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6"/></svg>);
+        const IconSettings = ({size=20, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>);
+        const IconX = ({size=24, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>);
+        const IconChefHat = ({size=20, className=""}) => (<svg className={className} xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-3.5c0-1.4-1.1-2.5-2.5-2.5h-5c-1.4 0-2.5 1.1-2.5 2.5V21"/><path d="M22 13c0 2.8-2.2 5-5 5H7c-2.8 0-5-2.2-5-5 0-2.5 1.8-4.6 4.2-4.9.4-3.1 3-5.6 6.3-5.6 3 0 5.6 2.2 6.2 5.1 2.2.5 3.3 2.5 3.3 5.4z"/></svg>);
+
+        // --- DATASET: 86 Items ---
+        const BRUNCH_ITEMS = [
+          "Poha", "Upma", "Masala Oats", "Moong Dal Chilla", "Vaghareli Idli", "Sprouted Moong Salad",
+          "Paneer Bhurji", "Sev-Tameta", "Indian Style Pasta", "Spaghetti Pasta (with basic Garlic and italian herbs)",
+          "Mexican bhel", "Thepla", "Hakka Noodles", "Chickpea Salad (Mediterranean Style)", "Vagharelo Rotlo",
+          "Besan Pudla / Chilla", "Instant Rava Dosa", "Ragi Pudla", "Mung Dal & Spinach Chilla",
+          "Vermicelli (Semiya) Upma", "Sweet Potato (Shakariya) Chaat", "Vaghareli Rotli", "Bhaat na Muthiya",
+          "Tamarind Rice", "Khakhra Chaat", "Idli Podi Toss", "Kala Chana Chaat", "Avocado & Paneer Toast",
+          "Masala Macaroni", "Jowar (Sorghum) Onion Chilla", "Leftover Rice Dhokla (Khattu)", "Kanda Batata Poha",
+          "Dabeli-Spiced Potato Sandwich", "Adai Dosa", "Moong Dal Appe/Paddu"
+        ];
+
+        const DINNER_ITEMS = [
+          "Gavar-Batak sabji", "Bhinda sabji", "Fulavar sabji", "Kobij sabji", "Kobi-Batata-Vatana",
+          "Dungari Bataka sabji", "Tindora sabji", "Vatana-Bateta nu Shaak", "Aloo Gobi Matar",
+          "Moong Dal with Palak", "Dal Fry", "Mag-Bhat", "Vaghareli Khichdi", "Quinoa Pulao",
+          "Rava Upma with Mixed Veggies", "Methi na Gota (Steamed Version)", "Matar Paneer", "Palak- Paneer",
+          "Burrito", "Dudhi-Chana sabji", "Chana Dal nu Shaak", "Kala Chana sabji", "Kabuli Chana sabji",
+          "Rajma (Indian Style)", "Whole Masoor Dal", "Dal Makhni", "Panchmel Dal", "Tuver na Thotha",
+          "Kadhi-Khichdi", "Bajra Khichdi", "Idli Sambhar", "Dosa", "Uttapam", "Appam (with Vegetable Stew)",
+          "Handvo", "Dudhi-Muthiya nu Shaak", "Pavbhaji", "Falafel", "Punjabi Paneer Sabji with different varieties",
+          "Millet Dosa", "Ringan no Oro", "Chori nu Shaak", "Rasawala Bateta", "Kaju Gathiya Sabji",
+          "Punjabi Chole", "Akhha Masoor", "Kadai Paneer", "Paneer Tikka Masala", "Shahi Paneer",
+          "Methi Matar Malai (Yogurt Version)", "Dal Baati (Baked)"
+        ];
+
+        // --- UTILS ---
+        const shuffleArray = (array) => {
+          let shuffled = [...array];
+          for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+          }
+          return shuffled;
+        };
+
+        const getYoutubeLink = (dish) => `https://www.youtube.com/results?search_query=${encodeURIComponent(dish + " recipe gujarati indian")}`;
+
+        const extractPrepAlert = (brunch, dinner) => {
+          const combined = (brunch + " " + dinner).toLowerCase();
+          let alerts = [];
+          if (combined.includes("chana") || combined.includes("rajma") || combined.includes("dal") || combined.includes("moong") || combined.includes("masoor") || combined.includes("kathol")) {
+            alerts.push("💧 Soak lentils/beans overnight.");
+          }
+          if (combined.includes("idli") || combined.includes("dosa") || combined.includes("uttapam") || combined.includes("appam") || combined.includes("handvo") || combined.includes("khattu") || combined.includes("adai")) {
+            alerts.push("🥣 Prepare and ferment batter overnight.");
+          }
+          if (combined.includes("paneer")) {
+            alerts.push("🧀 Defrost Paneer.");
+          }
+          return alerts.length > 0 ? alerts : ["No advanced prep needed for tomorrow!"];
+        };
+
+        const generateGroceryList = (weekMeals) => {
+          const sunday = new Set(["Onions", "Potatoes", "Garlic", "Ginger", "Green Chilies", "Cooking Oil", "Spices (Jeera, Mustard)"]);
+          const wednesday = new Set();
+          
+          weekMeals.forEach(meal => {
+            const combined = (meal.brunch + " " + meal.dinner).toLowerCase();
+            
+            // Sunday Staples
+            if (combined.includes("dal") || combined.includes("moong") || combined.includes("chana") || combined.includes("rajma") || combined.includes("masoor") || combined.includes("chole") || combined.includes("kathol")) sunday.add("Mixed Lentils & Beans");
+            if (combined.includes("rice") || combined.includes("bhat") || combined.includes("bhaat") || combined.includes("khichdi") || combined.includes("pulao") || combined.includes("idli") || combined.includes("dosa")) sunday.add("Rice (Basmati & Idli)");
+            if (combined.includes("oats")) sunday.add("Rolled Oats");
+            if (combined.includes("quinoa")) sunday.add("Quinoa");
+            if (combined.includes("pasta") || combined.includes("macaroni") || combined.includes("spaghetti") || combined.includes("noodle")) sunday.add("Pasta/Noodles");
+            if (combined.includes("besan") || combined.includes("pudla") || combined.includes("dhokla") || combined.includes("khamani")) sunday.add("Besan (Chickpea Flour)");
+            if (combined.includes("rava") || combined.includes("upma")) sunday.add("Rava (Semolina)");
+            if (combined.includes("bajra") || combined.includes("jowar") || combined.includes("millet") || combined.includes("ragi")) sunday.add("Millet Flours (Bajra/Jowar/Ragi)");
+            if (combined.includes("poha")) sunday.add("Poha (Flattened Rice)");
+
+            // Wednesday Fresh 
+            if (combined.includes("paneer")) wednesday.add("Fresh Paneer");
+            if (combined.includes("palak") || combined.includes("spinach")) wednesday.add("Fresh Spinach (Palak)");
+            if (combined.includes("methi")) wednesday.add("Fresh Fenugreek (Methi)");
+            if (combined.includes("dudhi")) wednesday.add("Bottle Gourd (Dudhi)");
+            if (combined.includes("bhinda")) wednesday.add("Okra (Bhinda)");
+            if (combined.includes("kobi") || combined.includes("cabbage")) wednesday.add("Cabbage (Kobij)");
+            if (combined.includes("fulavar") || combined.includes("gobi") || combined.includes("cauliflower")) wednesday.add("Cauliflower (Fulavar)");
+            if (combined.includes("tindora")) wednesday.add("Ivy Gourd (Tindora)");
+            if (combined.includes("gavar")) wednesday.add("Cluster Beans (Gavar)");
+            if (combined.includes("ringan") || combined.includes("baingan")) wednesday.add("Eggplant (Ringan)");
+            if (combined.includes("tameta") || combined.includes("tomato") || combined.includes("pavbhaji")) wednesday.add("Fresh Tomatoes");
+            if (combined.includes("pavbhaji") || combined.includes("bread") || combined.includes("toast") || combined.includes("dabeli")) wednesday.add("Pav / Bread Loaf");
+            if (combined.includes("avocado")) wednesday.add("Avocados");
+            if (combined.includes("mushroom")) wednesday.add("Mushrooms");
+            if (combined.includes("capsicum") || combined.includes("bell pepper")) wednesday.add("Capsicum");
+            if (combined.includes("yogurt") || combined.includes("kadhi") || combined.includes("curd") || combined.includes("dahi")) wednesday.add("Yogurt / Buttermilk");
+          });
+
+          return { sunday: Array.from(sunday), wednesday: Array.from(wednesday) };
+        };
+
+        // Generic Recipe Generator for Modal
+        const getRecipeDetails = (name) => {
+            return {
+                title: name,
+                ingredients: [
+                    "Main ingredient for " + name,
+                    "2 tbsp Cooking Oil or Ghee",
+                    "1 tsp Mustard & Cumin Seeds",
+                    "A pinch of Asafoetida (Hing) & Turmeric",
+                    "Salt and Spices (Chili powder, Coriander powder) to taste",
+                    "Fresh Coriander leaves for garnish"
+                ],
+                steps: [
+                    "Gather and prep all your ingredients. Wash and chop vegetables if required.",
+                    "Heat oil/ghee in a pan over medium heat. Add mustard and cumin seeds until they splutter.",
+                    "Add asafoetida, turmeric, and the main ingredients.",
+                    "Sauté well, cover, and let it cook. Add water if it is a gravy-based dish.",
+                    "Adjust salt and spices to your dietary preference.",
+                    "Once fully cooked, garnish with fresh coriander and serve hot."
+                ]
+            }
+        };
+
+        function App() {
+          const [schedule, setSchedule] = useState([]);
+          const [startDate, setStartDate] = useState(null);
+          const [view, setView] = useState('slot'); 
+          const [currentDayIndex, setCurrentDayIndex] = useState(0); 
+          const [activeWeek, setActiveWeek] = useState(0); 
+          
+          // Modals state
+          const [selectedRecipe, setSelectedRecipe] = useState(null);
+          const [showSettings, setShowSettings] = useState(false);
+
+          // Function properly declared before usage
+          const generateNewSchedule = () => {
+            const shuffledBrunch = shuffleArray(BRUNCH_ITEMS).slice(0, 28);
+            const shuffledDinner = shuffleArray(DINNER_ITEMS).slice(0, 28);
+            
+            let newSchedule = [];
+            for (let i = 0; i < 28; i++) {
+              newSchedule.push({
+                day: i + 1,
+                brunch: shuffledBrunch[i],
+                dinner: shuffledDinner[i]
+              });
+            }
+            
+            setSchedule(newSchedule);
+            const today = new Date();
+            setStartDate(today);
+            
+            // Instantly reset view bounds since a new schedule just generated
+            setCurrentDayIndex(0);
+            setActiveWeek(0);
+            
+            try {
+              localStorage.setItem('aarogya_nidhi_schedule', JSON.stringify(newSchedule));
+              localStorage.setItem('aarogya_nidhi_start', today.toISOString());
+            } catch (error) {
+              console.warn("localStorage access is restricted. Schedule will reset on page reload.");
+            }
+            
+            setShowSettings(false);
+          };
+
+          const calculateCurrentDay = (startDt) => {
+            const now = new Date();
+            // Reset times to compare dates accurately
+            const start = new Date(startDt);
+            start.setHours(0,0,0,0);
+            now.setHours(0,0,0,0);
+            
+            const diffTime = Math.max(0, now - start);
+            const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            
+            if (diffDays >= 28) {
+                // AUTO-RENEWAL ENGAGED: 4 weeks have passed!
+                // This triggers the regeneration of a brand new schedule and resets the dates.
+                generateNewSchedule();
+            } else {
+                setCurrentDayIndex(diffDays);
+                setActiveWeek(Math.floor(diffDays / 7));
+            }
+          };
+
+          const handleResetSchedule = () => {
+              if(window.confirm("Are you sure you want to generate a new 4-week schedule? This will erase your current plan.")) {
+                  generateNewSchedule();
+              }
+          };
+
+          useEffect(() => {
+            try {
+              const savedSchedule = localStorage.getItem('aarogya_nidhi_schedule');
+              const savedStartDate = localStorage.getItem('aarogya_nidhi_start');
+
+              if (savedSchedule && savedStartDate) {
+                setSchedule(JSON.parse(savedSchedule));
+                const parsedDate = new Date(savedStartDate);
+                setStartDate(parsedDate);
+                calculateCurrentDay(parsedDate);
+              } else {
+                generateNewSchedule();
+              }
+            } catch (error) {
+              console.warn("localStorage access is restricted in this preview. Using in-memory state instead.");
+              generateNewSchedule();
+            }
+          }, []);
+
+          if (schedule.length === 0 || !startDate) return <div className="h-screen flex items-center justify-center text-emerald-800 font-semibold animate-pulse">Generating your Aarogya Nidhi Plan...</div>;
+
+          // Date Formatting Helpers
+          const getDisplayDate = (offsetDays) => {
+              const d = new Date(startDate);
+              d.setDate(d.getDate() + offsetDays);
+              return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+          };
+
+          const todayData = schedule[currentDayIndex];
+          const tomorrowData = schedule[(currentDayIndex + 1) % 28];
+          const yesterdayData = schedule[(currentDayIndex - 1 + 28) % 28];
+          
+          const weekMeals = schedule.slice(activeWeek * 7, (activeWeek * 7) + 7);
+          const groceries = generateGroceryList(weekMeals);
+          const prepAlerts = extractPrepAlert(tomorrowData.brunch, tomorrowData.dinner);
+
+          return (
+            <div className="min-h-screen text-slate-800 pb-20 selection:bg-emerald-200">
+              {/* Top Navigation Bar */}
+              <header className="bg-white border-b border-slate-200 shadow-sm sticky top-0 z-20">
+                <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex justify-between items-center">
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="bg-emerald-100 text-emerald-600 p-1.5 sm:p-2 rounded-xl">
+                            <IconChefHat size={22} className="w-5 h-5 sm:w-6 sm:h-6" />
+                        </div>
+                        <div>
+                            <h1 className="text-lg sm:text-xl font-extrabold text-slate-800 tracking-tight leading-none">Aarogya Nidhi</h1>
+                            <p className="text-slate-500 text-[10px] sm:text-xs font-medium uppercase tracking-wider mt-0.5 sm:mt-1">Smart Meal Planner</p>
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 sm:gap-4">
+                        <div className="hidden sm:flex bg-slate-100 p-1 rounded-lg">
+                            <button 
+                                onClick={() => setView('slot')}
+                                className={`px-4 py-1.5 rounded-md text-sm font-semibold flex items-center gap-2 transition-all ${view === 'slot' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'}`}
+                            >
+                                <IconLayoutGrid size={16} /> Focus View
+                            </button>
+                            <button 
+                                onClick={() => setView('calendar')}
+                                className={`px-4 py-1.5 rounded-md text-sm font-semibold flex items-center gap-2 transition-all ${view === 'calendar' ? 'bg-white text-emerald-700 shadow-sm' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-200'}`}
+                            >
+                                <IconCalendar size={16} /> Calendar
+                            </button>
+                        </div>
+                        {/* Mobile view toggles */}
+                        <div className="flex sm:hidden gap-2">
+                             <button onClick={() => setView('slot')} className={`p-2 rounded-md ${view === 'slot' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}><IconLayoutGrid size={18} /></button>
+                             <button onClick={() => setView('calendar')} className={`p-2 rounded-md ${view === 'calendar' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}><IconCalendar size={18} /></button>
+                        </div>
+
+                        <button onClick={() => setShowSettings(true)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors ml-2">
+                            <IconSettings size={22} />
+                        </button>
+                    </div>
+                </div>
+              </header>
+
+              <main className="max-w-6xl mx-auto p-4 sm:p-6 pb-20 pt-6">
+                
+                {/* --- SLOT MACHINE VIEW --- */}
+                {view === 'slot' && (
+                  <div className="space-y-8 animate-in">
+                    
+                    {/* Prep Alert Banner */}
+                    <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl shadow-sm flex items-start gap-4">
+                      <div className="bg-amber-100 text-amber-600 p-2 rounded-full shrink-0"><IconBell size={24} className="w-5 h-5 sm:w-6 sm:h-6" /></div>
+                      <div>
+                        <h3 className="font-bold text-amber-900 flex flex-wrap items-center gap-x-2 text-sm sm:text-base">Tomorrow's Prep Alert <span className="text-xs sm:text-sm font-normal text-amber-700">({getDisplayDate(currentDayIndex + 1)})</span></h3>
+                        <ul className="text-amber-800 mt-1 space-y-1 font-medium text-xs sm:text-sm">
+                          {prepAlerts.map((alert, i) => <li key={i}>{alert}</li>)}
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* The 3 Slots */}
+                    <div className="flex flex-col lg:grid lg:grid-cols-3 gap-6 items-stretch lg:items-center">
+                      {/* Yesterday */}
+                      <div className="order-3 lg:order-1 bg-white/60 p-5 sm:p-6 rounded-3xl border border-slate-200 shadow-sm opacity-70 lg:scale-95 transform transition-all w-full">
+                        <div className="text-center mb-4 sm:mb-5">
+                            <h3 className="text-slate-400 font-bold uppercase tracking-widest text-[10px] sm:text-xs">Yesterday</h3>
+                            <p className="text-slate-600 font-medium text-xs sm:text-sm mt-1">{getDisplayDate(currentDayIndex - 1)}</p>
+                        </div>
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl">
+                            <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Brunch</span>
+                            <p className="font-semibold text-slate-700 mt-1 text-sm sm:text-base">{yesterdayData.brunch}</p>
+                          </div>
+                          <div className="bg-slate-50 p-3 sm:p-4 rounded-2xl">
+                            <span className="text-[10px] sm:text-xs text-slate-400 font-bold uppercase">Dinner</span>
+                            <p className="font-semibold text-slate-700 mt-1 text-sm sm:text-base">{yesterdayData.dinner}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Today (Highlighted) */}
+                      <div className="order-1 lg:order-2 bg-white p-6 sm:p-8 rounded-3xl shadow-xl border border-emerald-100 lg:transform lg:scale-105 z-10 relative overflow-hidden w-full">
+                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-emerald-400 to-teal-500"></div>
+                        <div className="text-center mb-5 sm:mb-6">
+                            <h2 className="text-emerald-600 font-extrabold text-xl sm:text-2xl tracking-tight uppercase">Today</h2>
+                            <p className="text-slate-500 font-medium text-sm sm:text-base mt-1">{getDisplayDate(currentDayIndex)}</p>
+                        </div>
+                        
+                        <div className="space-y-4 sm:space-y-5">
+                          {/* Brunch Card */}
+                          <div 
+                              onClick={() => setSelectedRecipe(getRecipeDetails(todayData.brunch))}
+                              className="bg-emerald-50/50 hover:bg-emerald-50 p-4 sm:p-5 rounded-2xl border border-emerald-100 relative group cursor-pointer transition-colors"
+                          >
+                            <span className="text-[10px] sm:text-xs text-emerald-600 font-bold uppercase flex items-center gap-1">
+                              🌅 Quick Brunch
+                            </span>
+                            <p className="font-bold text-slate-800 mt-1 sm:mt-2 text-base sm:text-lg leading-tight pr-8">{todayData.brunch}</p>
+                            <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 text-emerald-400 group-hover:text-emerald-600 transition-colors">
+                               <IconRight size={20} />
+                            </div>
+                          </div>
+
+                          {/* Dinner Card */}
+                          <div 
+                              onClick={() => setSelectedRecipe(getRecipeDetails(todayData.dinner))}
+                              className="bg-emerald-50/50 hover:bg-emerald-50 p-4 sm:p-5 rounded-2xl border border-emerald-100 relative group cursor-pointer transition-colors"
+                          >
+                            <span className="text-[10px] sm:text-xs text-emerald-600 font-bold uppercase flex items-center gap-1">
+                              🍲 Hearty Dinner
+                            </span>
+                            <p className="font-bold text-slate-800 mt-1 sm:mt-2 text-base sm:text-lg leading-tight pr-8">{todayData.dinner}</p>
+                            <div className="absolute top-1/2 -translate-y-1/2 right-3 sm:right-4 text-emerald-400 group-hover:text-emerald-600 transition-colors">
+                               <IconRight size={20} />
+                            </div>
+                          </div>
+                        </div>
+                        <p className="text-center text-[10px] sm:text-xs text-slate-400 mt-4 sm:mt-5 font-medium">Click a meal to view recipe steps</p>
+                      </div>
+
+                      {/* Tomorrow */}
+                      <div className="order-2 lg:order-3 bg-white/90 p-5 sm:p-6 rounded-3xl shadow-md border border-slate-200 w-full">
+                         <div className="text-center mb-4 sm:mb-5">
+                            <h3 className="text-slate-500 font-bold uppercase tracking-widest text-[10px] sm:text-xs">Tomorrow</h3>
+                            <p className="text-slate-700 font-medium text-xs sm:text-sm mt-1">{getDisplayDate(currentDayIndex + 1)}</p>
+                        </div>
+                        <div className="space-y-3 sm:space-y-4">
+                          <div className="bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors p-3 sm:p-4 rounded-2xl border border-dashed border-slate-300" onClick={() => setSelectedRecipe(getRecipeDetails(tomorrowData.brunch))}>
+                            <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase">Brunch</span>
+                            <p className="font-semibold text-slate-800 mt-1 text-sm sm:text-base">{tomorrowData.brunch}</p>
+                          </div>
+                          <div className="bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors p-3 sm:p-4 rounded-2xl border border-dashed border-slate-300" onClick={() => setSelectedRecipe(getRecipeDetails(tomorrowData.dinner))}>
+                            <span className="text-[10px] sm:text-xs text-slate-500 font-bold uppercase">Dinner</span>
+                            <p className="font-semibold text-slate-800 mt-1 text-sm sm:text-base">{tomorrowData.dinner}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* --- CALENDAR VIEW --- */}
+                {view === 'calendar' && (
+                  <div className="space-y-6 animate-in">
+                    
+                    {/* Top Dashboard Panels */}
+                    <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6">
+                       {/* Grocery Panel */}
+                       <div className="order-2 lg:order-1 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                         <div className="bg-slate-800 p-4 sm:p-5 text-white flex justify-between items-center">
+                            <h3 className="font-bold flex items-center gap-2 text-sm sm:text-base"><IconCart size={20} className="w-4 h-4 sm:w-5 sm:h-5" /> Grocery List</h3>
+                            <span className="text-[10px] sm:text-xs font-medium bg-slate-700 px-2 py-1 rounded text-slate-200">Week {activeWeek + 1}</span>
+                         </div>
+                         <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 flex-grow">
+                            <div>
+                              <h4 className="font-bold text-slate-800 text-xs sm:text-sm uppercase tracking-wider mb-2 sm:mb-3 border-b border-slate-100 pb-2">🛒 Sunday Staples</h4>
+                              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-slate-600">
+                                {groceries.sunday.map((item, i) => <li key={i} className="flex items-start gap-2"><span className="text-emerald-500 font-bold">•</span> {item}</li>)}
+                              </ul>
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-slate-800 text-xs sm:text-sm uppercase tracking-wider mb-2 sm:mb-3 border-b border-slate-100 pb-2">🌿 Wednesday Fresh</h4>
+                              <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm text-slate-600">
+                                {groceries.wednesday.length > 0 ? groceries.wednesday.map((item, i) => <li key={i} className="flex items-start gap-2"><span className="text-emerald-500 font-bold">•</span> {item}</li>) : <li className="text-slate-400 italic">No mid-week perishables detected.</li>}
+                              </ul>
+                            </div>
+                         </div>
+                       </div>
+
+                       {/* Active Prep Alert Panel */}
+                       <div className="order-1 lg:order-2 bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                          <div className="bg-amber-500 p-4 sm:p-5 text-white flex justify-between items-center">
+                            <h3 className="font-bold flex items-center gap-2 text-sm sm:text-base"><IconBell size={20} className="w-4 h-4 sm:w-5 sm:h-5" /> Prep Alerts</h3>
+                            <span className="text-[10px] sm:text-xs font-bold bg-amber-600 px-2 py-1 rounded text-white">{getDisplayDate(currentDayIndex + 1)}</span>
+                          </div>
+                          <div className="p-4 sm:p-6 flex-grow flex flex-col justify-center bg-amber-50/30">
+                            <ul className="space-y-2 sm:space-y-3 text-base sm:text-lg text-slate-800 font-semibold">
+                              {prepAlerts.map((alert, i) => <li key={i} className="flex items-center gap-3"><span className="text-xl sm:text-2xl leading-none">{alert.split(' ')[0]}</span> {alert.substring(alert.indexOf(' ') + 1)}</li>)}
+                            </ul>
+                            <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-amber-100">
+                                <p className="text-[10px] sm:text-xs text-slate-500 uppercase font-bold tracking-wider">Tomorrow's Menu</p>
+                                <p className="text-xs sm:text-sm text-slate-700 mt-1 font-medium">{tomorrowData.brunch} & {tomorrowData.dinner}</p>
+                            </div>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Week Navigation */}
+                    <div className="flex justify-between items-center bg-white p-2 pl-4 rounded-2xl shadow-sm border border-slate-200 mt-8">
+                      <h2 className="text-lg font-bold text-slate-800">Week {activeWeek + 1} of 4</h2>
+                      <div className="flex gap-1">
+                          <button 
+                            onClick={() => setActiveWeek(Math.max(0, activeWeek - 1))}
+                            disabled={activeWeek === 0}
+                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <IconLeft size={20} />
+                          </button>
+                          <button 
+                            onClick={() => setActiveWeek(Math.min(3, activeWeek + 1))}
+                            disabled={activeWeek === 3}
+                            className="p-2 rounded-xl hover:bg-slate-100 text-slate-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                          >
+                            <IconRight size={20} />
+                          </button>
+                      </div>
+                    </div>
+
+                    {/* Calendar Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+                      {weekMeals.map((meal, index) => {
+                        const dayOffset = (activeWeek * 7) + index;
+                        const isToday = dayOffset === currentDayIndex;
+                        const dateString = getDisplayDate(dayOffset);
+                        
+                        return (
+                          <div key={meal.day} className={`bg-white rounded-2xl overflow-hidden border transition-all ${isToday ? 'border-emerald-500 shadow-md ring-1 ring-emerald-500' : 'border-slate-200 hover:shadow-sm hover:border-slate-300'}`}>
+                            <div className={`px-3 py-2 border-b ${isToday ? 'bg-emerald-500 text-white' : 'bg-slate-50 text-slate-800'}`}>
+                              <div className="text-xs font-bold uppercase tracking-wider opacity-80">{dateString.split(',')[0]}</div>
+                              <div className="text-sm font-bold flex items-center gap-2">
+                                  {dateString.split(',')[1]}
+                                  {isToday && <span className="text-[10px] bg-white text-emerald-600 px-1.5 py-0.5 rounded-sm">TODAY</span>}
+                              </div>
+                            </div>
+                            <div className="p-3 space-y-3">
+                              <div 
+                                className="group relative cursor-pointer hover:bg-slate-50 p-1 -m-1 rounded-lg transition-colors"
+                                onClick={() => setSelectedRecipe(getRecipeDetails(meal.brunch))}
+                              >
+                                <div className="text-[10px] uppercase font-bold text-emerald-600 mb-0.5">Brunch</div>
+                                <div className="text-sm font-semibold text-slate-700 leading-tight">{meal.brunch}</div>
+                              </div>
+                              <div className="w-full h-px bg-slate-100"></div>
+                              <div 
+                                className="group relative cursor-pointer hover:bg-slate-50 p-1 -m-1 rounded-lg transition-colors"
+                                onClick={() => setSelectedRecipe(getRecipeDetails(meal.dinner))}
+                              >
+                                <div className="text-[10px] uppercase font-bold text-emerald-600 mb-0.5">Dinner</div>
+                                <div className="text-sm font-semibold text-slate-700 leading-tight">{meal.dinner}</div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    
+                  </div>
+                )}
+              </main>
+
+              {/* --- RECIPE MODAL --- */}
+              {selectedRecipe && (
+                  <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/40 backdrop-blur-sm animate-in">
+                      <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden animate-slide-up max-h-[90vh] flex flex-col">
+                          <div className="bg-emerald-600 p-5 sm:p-6 text-white relative flex-shrink-0">
+                              <button onClick={() => setSelectedRecipe(null)} className="absolute top-3 sm:top-4 right-3 sm:right-4 p-2 bg-white/20 hover:bg-white/30 rounded-full transition-colors">
+                                  <IconX size={20} />
+                              </button>
+                              <h2 className="text-xl sm:text-2xl font-bold pr-10 leading-tight">{selectedRecipe.title}</h2>
+                              <a 
+                                  href={getYoutubeLink(selectedRecipe.title)} 
+                                  target="_blank" rel="noreferrer" 
+                                  className="mt-3 sm:mt-4 inline-flex items-center gap-2 bg-white text-red-600 px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-bold shadow-sm hover:shadow-md transition-all"
+                              >
+                                  <IconYoutube size={16} className="w-4 h-4 sm:w-5 sm:h-5" /> Watch on YouTube
+                              </a>
+                          </div>
+                          
+                          <div className="p-5 sm:p-6 overflow-y-auto">
+                              <h3 className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest mb-2 sm:mb-3">Ingredients (Standard)</h3>
+                              <ul className="space-y-1.5 sm:space-y-2 mb-6 sm:mb-8">
+                                  {selectedRecipe.ingredients.map((ing, i) => (
+                                      <li key={i} className="flex gap-2 text-slate-700 text-xs sm:text-sm">
+                                          <span className="text-emerald-500 font-bold">•</span> {ing}
+                                      </li>
+                                  ))}
+                              </ul>
+
+                              <h3 className="text-xs sm:text-sm font-bold text-slate-400 uppercase tracking-widest mb-2 sm:mb-3">Preparation Steps</h3>
+                              <ol className="space-y-3 sm:space-y-4">
+                                  {selectedRecipe.steps.map((step, i) => (
+                                      <li key={i} className="flex gap-3 sm:gap-4">
+                                          <span className="flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-[10px] sm:text-xs font-bold">{i+1}</span>
+                                          <p className="text-slate-700 text-xs sm:text-sm pt-0.5">{step}</p>
+                                      </li>
+                                  ))}
+                              </ol>
+                          </div>
+                      </div>
+                  </div>
+              )}
+
+              {/* --- SETTINGS MODAL --- */}
+              {showSettings && (
+                  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in">
+                      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-slide-up p-6">
+                          <div className="flex justify-between items-center mb-6 border-b border-slate-100 pb-4">
+                              <h2 className="text-lg font-bold text-slate-800 flex items-center gap-2"><IconSettings size={20} className="text-slate-500"/> App Settings</h2>
+                              <button onClick={() => setShowSettings(false)} className="text-slate-400 hover:text-slate-600">
+                                  <IconX size={24} />
+                              </button>
+                          </div>
+                          
+                          <div className="space-y-4">
+                              <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
+                                  <h3 className="font-bold text-red-800 text-sm">Danger Zone</h3>
+                                  <p className="text-xs text-red-600 mt-1 mb-3">Generating a new cycle will permanently erase your current 4-week meal rotation.</p>
+                                  <button 
+                                      onClick={handleResetSchedule}
+                                      className="w-full bg-white text-red-600 border border-red-200 font-bold py-2 rounded-xl text-sm hover:bg-red-600 hover:text-white transition-colors"
+                                  >
+                                      Generate New 4-Week Cycle
+                                  </button>
+                              </div>
+                          </div>
+                      </div>
+                  </div>
+              )}
+
+            </div>
+          );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
